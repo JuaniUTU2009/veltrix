@@ -20,8 +20,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ---------- Ayudantes ----------
-function R  { param($Path, $Name, $Type, $Data) reg.exe add $Path /v $Name /t $Type /d $Data /f *> $null }
-function RD { param($Path, $Name) reg.exe delete $Path /v $Name /f *> $null }
+function Set-Reg { param($Path, $Name, $Type, $Data) reg.exe add $Path /v $Name /t $Type /d $Data /f *> $null }
+function Remove-Reg { param($Path, $Name) reg.exe delete $Path /v $Name /f *> $null }
 function Paso { param($t) Write-Host ''; Write-Host "  > $t" -ForegroundColor Cyan }
 function Listo { param($t) Write-Host "    [OK] $t" -ForegroundColor Green }
 function Aviso { param($t) Write-Host "    [!] $t" -ForegroundColor Yellow }
@@ -52,7 +52,7 @@ function Banner {
 
 function M-Restauracion {
     Paso 'Creando punto de restauracion (puede tardar 1-2 minutos)...'
-    R 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore' 'SystemRestorePointCreationFrequency' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore' 'SystemRestorePointCreationFrequency' REG_DWORD 0
     try {
         Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction Stop
         Checkpoint-Computer -Description 'Veltrix - antes de optimizar' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop
@@ -64,46 +64,46 @@ function M-Restauracion {
 
 function M-Visual {
     Paso 'Efectos visuales en modo rendimiento...'
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' REG_DWORD 3
-    R 'HKCU\Control Panel\Desktop' 'UserPreferencesMask' REG_BINARY '9012038010000000'
-    R 'HKCU\Control Panel\Desktop' 'FontSmoothing' REG_SZ 2
-    R 'HKCU\Control Panel\Desktop' 'MenuShowDelay' REG_SZ 100
-    R 'HKCU\Control Panel\Desktop\WindowMetrics' 'MinAnimate' REG_SZ 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAnimations' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ListviewShadow' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\DWM' 'EnableAeroPeek' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' REG_DWORD 3
+    Set-Reg 'HKCU\Control Panel\Desktop' 'UserPreferencesMask' REG_BINARY '9012038010000000'
+    Set-Reg 'HKCU\Control Panel\Desktop' 'FontSmoothing' REG_SZ 2
+    Set-Reg 'HKCU\Control Panel\Desktop' 'MenuShowDelay' REG_SZ 100
+    Set-Reg 'HKCU\Control Panel\Desktop\WindowMetrics' 'MinAnimate' REG_SZ 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAnimations' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ListviewShadow' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\DWM' 'EnableAeroPeek' REG_DWORD 0
     Listo 'Efectos visuales optimizados (letras nitidas y miniaturas se mantienen)'
 }
 
 function M-SegundoPlano {
     Paso 'Quitando publicidad y procesos innecesarios en segundo plano...'
-    foreach ($v in $CDM_VALS) { R $CDM $v REG_DWORD 0 }
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowSyncProviderNotifications' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'Start_IrisRecommendations' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds' 'EnableFeeds' REG_DWORD 0
-    R 'HKCU\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' REG_DWORD 1
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'StartupBoostEnabled' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'BackgroundModeEnabled' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' REG_DWORD 0
+    foreach ($v in $CDM_VALS) { Set-Reg $CDM $v REG_DWORD 0 }
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowSyncProviderNotifications' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'Start_IrisRecommendations' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds' 'EnableFeeds' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' REG_DWORD 1
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'StartupBoostEnabled' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'BackgroundModeEnabled' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' REG_DWORD 0
     Listo 'Sin anuncios, widgets, Bing en el Inicio ni Edge en segundo plano'
 }
 
 function M-Telemetria {
     Paso 'Reduciendo telemetria y recoleccion de datos...'
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry' REG_DWORD 0
     foreach ($s in 'DiagTrack', 'dmwappushservice') {
         sc.exe stop $s *> $null
         sc.exe config $s start= disabled *> $null
     }
     foreach ($t in $TAREAS) { schtasks.exe /Change /TN $t /Disable *> $null }
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'PublishUserActivities' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'UploadUserActivities' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Siuf\Rules' 'NumberOfSIUFInPeriod' REG_DWORD 0
-    R 'HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'PublishUserActivities' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'UploadUserActivities' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Siuf\Rules' 'NumberOfSIUFInPeriod' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' REG_DWORD 1
     Listo 'Telemetria al minimo'
 }
 
@@ -114,7 +114,7 @@ function M-EnergiaPC {
     powercfg.exe -setactive $PLAN_VELTRIX *> $null
     if ($LASTEXITCODE -ne 0) { powercfg.exe -setactive SCHEME_MIN *> $null }
     powercfg.exe -h off *> $null
-    R 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling' 'PowerThrottlingOff' REG_DWORD 1
+    Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling' 'PowerThrottlingOff' REG_DWORD 1
     Listo 'Plan "Veltrix Rendimiento" activo, sin hibernacion ni limites de CPU'
 }
 
@@ -132,30 +132,30 @@ function M-EnergiaLaptop {
 
 function M-Juegos {
     Paso 'Optimizacion para juegos...'
-    R 'HKCU\Software\Microsoft\GameBar' 'AutoGameModeEnabled' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\GameBar' 'AllowAutoGameMode' REG_DWORD 1
-    R 'HKCU\System\GameConfigStore' 'GameDVR_Enabled' REG_DWORD 0
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled' REG_DWORD 0
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR' REG_DWORD 0
-    R 'HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' 'HwSchMode' REG_DWORD 2
-    R $MM 'SystemResponsiveness' REG_DWORD 10
-    R $MM 'NetworkThrottlingIndex' REG_DWORD 0xffffffff
-    R "$MM\Tasks\Games" 'GPU Priority' REG_DWORD 8
-    R "$MM\Tasks\Games" 'Priority' REG_DWORD 6
-    R "$MM\Tasks\Games" 'Scheduling Category' REG_SZ 'High'
-    R "$MM\Tasks\Games" 'SFIO Priority' REG_SZ 'High'
-    R 'HKCU\Control Panel\Mouse' 'MouseSpeed' REG_SZ 0
-    R 'HKCU\Control Panel\Mouse' 'MouseThreshold1' REG_SZ 0
-    R 'HKCU\Control Panel\Mouse' 'MouseThreshold2' REG_SZ 0
+    Set-Reg 'HKCU\Software\Microsoft\GameBar' 'AutoGameModeEnabled' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\GameBar' 'AllowAutoGameMode' REG_DWORD 1
+    Set-Reg 'HKCU\System\GameConfigStore' 'GameDVR_Enabled' REG_DWORD 0
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR' REG_DWORD 0
+    Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' 'HwSchMode' REG_DWORD 2
+    Set-Reg $MM 'SystemResponsiveness' REG_DWORD 10
+    Set-Reg $MM 'NetworkThrottlingIndex' REG_DWORD 0xffffffff
+    Set-Reg "$MM\Tasks\Games" 'GPU Priority' REG_DWORD 8
+    Set-Reg "$MM\Tasks\Games" 'Priority' REG_DWORD 6
+    Set-Reg "$MM\Tasks\Games" 'Scheduling Category' REG_SZ 'High'
+    Set-Reg "$MM\Tasks\Games" 'SFIO Priority' REG_SZ 'High'
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseSpeed' REG_SZ 0
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseThreshold1' REG_SZ 0
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseThreshold2' REG_SZ 0
     Listo 'Modo juego, sin grabacion Xbox, prioridad a juegos, mouse 1:1'
 }
 
 function M-Latencia {
     param([bool]$Laptop)
     Paso 'Latencia y respuesta del sistema...'
-    R 'HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation' REG_DWORD 38
-    R 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel' 'GlobalTimerResolutionRequests' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\DirectX\UserGpuPreferences' 'DirectXUserGlobalSettings' REG_SZ 'SwapEffectUpgradeEnable=1;'
+    Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation' REG_DWORD 38
+    Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel' 'GlobalTimerResolutionRequests' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\DirectX\UserGpuPreferences' 'DirectXUserGlobalSettings' REG_SZ 'SwapEffectUpgradeEnable=1;'
     bcdedit.exe /deletevalue useplatformclock *> $null
     bcdedit.exe /deletevalue useplatformtick *> $null
     if (-not $Laptop) {
@@ -168,7 +168,7 @@ function M-Latencia {
 function M-Red {
     param([bool]$Laptop)
     Paso 'Red para juegos online...'
-    R 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode' REG_DWORD 0
+    Set-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode' REG_DWORD 0
     Get-ChildItem $IFACES -ErrorAction SilentlyContinue | ForEach-Object {
         New-ItemProperty -Path $_.PSPath -Name 'TcpAckFrequency' -Value 1 -PropertyType DWord -Force -ErrorAction SilentlyContinue | Out-Null
         New-ItemProperty -Path $_.PSPath -Name 'TCPNoDelay' -Value 1 -PropertyType DWord -Force -ErrorAction SilentlyContinue | Out-Null
@@ -306,7 +306,7 @@ function M-Competitivo {
     New-Item -ItemType Directory -Path $BACKUP_DIR -Force -ErrorAction SilentlyContinue | Out-Null
     $bk = Join-Path $BACKUP_DIR 'hvci_backup.reg'
     if (-not (Test-Path $bk)) { reg.exe export 'HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard' $bk /y *> $null }
-    R $HVCI 'Enabled' REG_DWORD 0
+    Set-Reg $HVCI 'Enabled' REG_DWORD 0
     Listo 'Modo competitivo aplicado'
     Reiniciar
 }
@@ -318,66 +318,66 @@ function M-Revertir {
     if ((Read-Host '  Continuar? (S/N)') -notmatch '^[sS]') { return }
 
     Paso 'Efectos visuales...'
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' REG_DWORD 0
-    R 'HKCU\Control Panel\Desktop' 'UserPreferencesMask' REG_BINARY '9E1E078012000000'
-    R 'HKCU\Control Panel\Desktop' 'MenuShowDelay' REG_SZ 400
-    R 'HKCU\Control Panel\Desktop\WindowMetrics' 'MinAnimate' REG_SZ 1
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAnimations' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ListviewShadow' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\Windows\DWM' 'EnableAeroPeek' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' REG_DWORD 0
+    Set-Reg 'HKCU\Control Panel\Desktop' 'UserPreferencesMask' REG_BINARY '9E1E078012000000'
+    Set-Reg 'HKCU\Control Panel\Desktop' 'MenuShowDelay' REG_SZ 400
+    Set-Reg 'HKCU\Control Panel\Desktop\WindowMetrics' 'MinAnimate' REG_SZ 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAnimations' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ListviewShadow' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\DWM' 'EnableAeroPeek' REG_DWORD 1
 
     Paso 'Segundo plano y sugerencias...'
-    foreach ($v in $CDM_VALS) { R $CDM $v REG_DWORD 1 }
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowSyncProviderNotifications' REG_DWORD 1
-    RD 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'Start_IrisRecommendations'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds' 'EnableFeeds'
-    RD 'HKCU\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'StartupBoostEnabled'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'BackgroundModeEnabled'
-    RD 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec'
+    foreach ($v in $CDM_VALS) { Set-Reg $CDM $v REG_DWORD 1 }
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowSyncProviderNotifications' REG_DWORD 1
+    Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'Start_IrisRecommendations'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds' 'EnableFeeds'
+    Remove-Reg 'HKCU\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'StartupBoostEnabled'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Edge' 'BackgroundModeEnabled'
+    Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec'
 
     Paso 'Telemetria y privacidad...'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry'
     sc.exe config DiagTrack start= auto *> $null
     sc.exe start DiagTrack *> $null
     sc.exe config dmwappushservice start= demand *> $null
     foreach ($t in $TAREAS) { schtasks.exe /Change /TN $t /Enable *> $null }
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 1
-    R 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 1
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'PublishUserActivities'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'UploadUserActivities'
-    RD 'HKCU\Software\Microsoft\Siuf\Rules' 'NumberOfSIUFInPeriod'
-    RD 'HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot'
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 1
+    Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 1
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'PublishUserActivities'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System' 'UploadUserActivities'
+    Remove-Reg 'HKCU\Software\Microsoft\Siuf\Rules' 'NumberOfSIUFInPeriod'
+    Remove-Reg 'HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot'
 
     Paso 'Energia...'
     powercfg.exe -setactive SCHEME_BALANCED *> $null
     powercfg.exe -delete $PLAN_VELTRIX *> $null
     powercfg.exe -restoredefaultschemes *> $null
     powercfg.exe -h on *> $null
-    RD 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling' 'PowerThrottlingOff'
+    Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling' 'PowerThrottlingOff'
 
     Paso 'Juegos, latencia y mouse...'
-    RD 'HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled'
-    R 'HKCU\System\GameConfigStore' 'GameDVR_Enabled' REG_DWORD 1
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR'
-    RD 'HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' 'HwSchMode'
-    R $MM 'SystemResponsiveness' REG_DWORD 20
-    R $MM 'NetworkThrottlingIndex' REG_DWORD 10
-    R "$MM\Tasks\Games" 'GPU Priority' REG_DWORD 8
-    R "$MM\Tasks\Games" 'Priority' REG_DWORD 2
-    R "$MM\Tasks\Games" 'Scheduling Category' REG_SZ 'Medium'
-    R "$MM\Tasks\Games" 'SFIO Priority' REG_SZ 'Normal'
-    R 'HKCU\Control Panel\Mouse' 'MouseSpeed' REG_SZ 1
-    R 'HKCU\Control Panel\Mouse' 'MouseThreshold1' REG_SZ 6
-    R 'HKCU\Control Panel\Mouse' 'MouseThreshold2' REG_SZ 10
-    R 'HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation' REG_DWORD 2
-    RD 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel' 'GlobalTimerResolutionRequests'
-    RD 'HKCU\Software\Microsoft\DirectX\UserGpuPreferences' 'DirectXUserGlobalSettings'
+    Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled'
+    Set-Reg 'HKCU\System\GameConfigStore' 'GameDVR_Enabled' REG_DWORD 1
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR'
+    Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' 'HwSchMode'
+    Set-Reg $MM 'SystemResponsiveness' REG_DWORD 20
+    Set-Reg $MM 'NetworkThrottlingIndex' REG_DWORD 10
+    Set-Reg "$MM\Tasks\Games" 'GPU Priority' REG_DWORD 8
+    Set-Reg "$MM\Tasks\Games" 'Priority' REG_DWORD 2
+    Set-Reg "$MM\Tasks\Games" 'Scheduling Category' REG_SZ 'Medium'
+    Set-Reg "$MM\Tasks\Games" 'SFIO Priority' REG_SZ 'Normal'
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseSpeed' REG_SZ 1
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseThreshold1' REG_SZ 6
+    Set-Reg 'HKCU\Control Panel\Mouse' 'MouseThreshold2' REG_SZ 10
+    Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation' REG_DWORD 2
+    Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel' 'GlobalTimerResolutionRequests'
+    Remove-Reg 'HKCU\Software\Microsoft\DirectX\UserGpuPreferences' 'DirectXUserGlobalSettings'
 
     Paso 'Red...'
-    RD 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode'
+    Remove-Reg 'HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode'
     Get-ChildItem $IFACES -ErrorAction SilentlyContinue | ForEach-Object {
         Remove-ItemProperty -Path $_.PSPath -Name 'TcpAckFrequency' -Force -ErrorAction SilentlyContinue
         Remove-ItemProperty -Path $_.PSPath -Name 'TCPNoDelay' -Force -ErrorAction SilentlyContinue
@@ -398,7 +398,7 @@ function M-Revertir {
     $bk = Join-Path $BACKUP_DIR 'hvci_backup.reg'
     if (Test-Path $bk) {
         Paso 'Integridad de memoria...'
-        RD $HVCI 'Enabled'
+        Remove-Reg $HVCI 'Enabled'
         reg.exe import $bk *> $null
         Remove-Item $bk -Force -ErrorAction SilentlyContinue
     }

@@ -355,7 +355,7 @@ Unregister-ScheduledTask -TaskName 'OptiFrag Despues' -Confirm:$false
 
 $VX_CORE = @'
 $URL = 'https://raw.githubusercontent.com/JuaniUTU2009/veltrix/main/optifrag.ps1'
-$VER = '1.0'
+$VER = '1.1'
 $PLAN_OPTIFRAG = '0f7a6f00-0000-4000-8000-00000000f7a6'
 $CDM = 'HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
 $CDM_VALS = 'SilentInstalledAppsEnabled', 'SystemPaneSuggestionsEnabled', 'SoftLandingEnabled', 'PreInstalledAppsEnabled', 'OemPreInstalledAppsEnabled', 'RotatingLockScreenOverlayEnabled', 'SubscribedContent-310093Enabled', 'SubscribedContent-338387Enabled', 'SubscribedContent-338388Enabled', 'SubscribedContent-338389Enabled', 'SubscribedContent-338393Enabled', 'SubscribedContent-353694Enabled', 'SubscribedContent-353696Enabled', 'SubscribedContent-353698Enabled'
@@ -724,6 +724,11 @@ function Job-Revertir {
     powercfg.exe -restoredefaultschemes *> $null
     powercfg.exe -h on *> $null
     Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling' 'PowerThrottlingOff'
+    Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' 'GlobalUserDisabled'
+    Remove-Reg 'HKCU\Software\Microsoft\Lighting' 'AmbientLightingEnabled'
+    Remove-Reg 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata' 'PreventDeviceMetadataFromNetwork'
+    Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager' 'DisableWpbtExecution'
+    Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' 'POWERSHELL_TELEMETRY_OPTOUT'
 
     Paso 'Juegos, latencia, mouse y teclado'
     Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled'
@@ -1124,6 +1129,16 @@ $VX_TWEAKS = @(
        State = { (Get-RegVal 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec') -eq 0 }
        On = { Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' REG_DWORD 0 }
        Off = { Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' } },
+    @{ Id = 'bgapps'; Cat = 'Rendimiento'; Nombre = 'Apps de la tienda sin correr en segundo plano'; Imp = 'Medio'; Solo = ''
+       Desc = 'Correo, Xbox, Vincular tel&eacute;fono y otras apps dejan de funcionar escondidas. Menos RAM y procesos. Se abren normal cuando las us&aacute;s.'
+       State = { (Get-RegVal 'HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' 'GlobalUserDisabled') -eq 1 }
+       On = { Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' 'GlobalUserDisabled' REG_DWORD 1 }
+       Off = { Remove-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' 'GlobalUserDisabled' } },
+    @{ Id = 'luces'; Cat = 'Rendimiento'; Nombre = 'Iluminaci&oacute;n din&aacute;mica de Windows apagada'; Imp = 'Bajo'; Solo = ''
+       Desc = 'Windows deja de controlar las luces RGB de teclado y mouse. Si us&aacute;s el programa de tu marca (Razer, Logitech...) sigue funcionando igual.'
+       State = { (Get-RegVal 'HKCU\Software\Microsoft\Lighting' 'AmbientLightingEnabled') -eq 0 }
+       On = { Set-Reg 'HKCU\Software\Microsoft\Lighting' 'AmbientLightingEnabled' REG_DWORD 0 }
+       Off = { Remove-Reg 'HKCU\Software\Microsoft\Lighting' 'AmbientLightingEnabled' } },
     @{ Id = 'gamemode'; Cat = 'Juegos'; Nombre = 'Modo juego de Windows'; Imp = 'Medio'; Solo = ''
        Desc = 'Windows prioriza el juego y no instala actualizaciones ni drivers mientras jug&aacute;s.'
        State = { (Get-RegVal 'HKCU\Software\Microsoft\GameBar' 'AutoGameModeEnabled') -ne 0 }
@@ -1212,6 +1227,16 @@ $VX_TWEAKS = @(
        State = { (Get-RegVal 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled') -eq 0 }
        On = { Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 0; Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 0 }
        Off = { Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' REG_DWORD 1; Set-Reg 'HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' REG_DWORD 1 } },
+    @{ Id = 'pstele'; Cat = 'Privacidad'; Nombre = 'Telemetr&iacute;a de PowerShell apagada'; Imp = 'Bajo'; Solo = ''
+       Desc = 'PowerShell deja de mandar datos de uso a Microsoft cada vez que se abre.'
+       State = { (Get-RegVal 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' 'POWERSHELL_TELEMETRY_OPTOUT') -eq '1' }
+       On = { Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' 'POWERSHELL_TELEMETRY_OPTOUT' REG_SZ '1' }
+       Off = { Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' 'POWERSHELL_TELEMETRY_OPTOUT' } },
+    @{ Id = 'fabricantes'; Cat = 'Sistema'; Nombre = 'Bloquear programas que instalan solos los fabricantes'; Imp = 'Bajo'; Solo = ''
+       Desc = 'Evita que al conectar un mouse o teclado se instale solo el programa de la marca, y que la placa madre meta programas desde el firmware. Los drivers siguen llegando por Windows Update.'
+       State = { ((Get-RegVal 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata' 'PreventDeviceMetadataFromNetwork') -eq 1) -and ((Get-RegVal 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager' 'DisableWpbtExecution') -eq 1) }
+       On = { Set-Reg 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata' 'PreventDeviceMetadataFromNetwork' REG_DWORD 1; Set-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager' 'DisableWpbtExecution' REG_DWORD 1 }
+       Off = { Remove-Reg 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata' 'PreventDeviceMetadataFromNetwork'; Remove-Reg 'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager' 'DisableWpbtExecution' } },
     @{ Id = 'search'; Cat = 'Sistema'; Nombre = 'B&uacute;squeda de Windows en modo Cl&aacute;sico'; Imp = 'Bajo'; Solo = ''
        Desc = 'No indexa todo el disco: menos escrituras en el SSD y menos CPU. Tus carpetas principales se siguen buscando.'
        State = { (Get-RegVal 'HKLM\SOFTWARE\Microsoft\Windows Search' 'EnableFindMyFiles') -ne 1 }
@@ -2276,6 +2301,8 @@ else {
         if ($m -and $m.Juegos -contains 'CS2') { $tips += 'CS2: pantalla completa, NVIDIA Reflex activado, &quot;Aumentar contraste de jugadores&quot; activado, V-Sync apagado y un l&iacute;mite de FPS estable (fps_max).' }
         if ($m -and $m.Juegos -contains 'Fortnite') { $tips += 'Fortnite: en PCs de pocos recursos, modo de renderizado &quot;Rendimiento&quot;; con buena placa, DirectX 12. NVIDIA Reflex activado y V-Sync apagado.' }
         if ($tips.Count -eq 0) { $tips += 'No encontramos VALORANT, CS2 ni Fortnite instalados. En cualquier juego competitivo: pantalla completa, V-Sync apagado, NVIDIA Reflex activado y el monitor a su m&aacute;xima frecuencia (Hz).' }
+        if ($m -and $m.GPU -match 'NVIDIA|GeForce|RTX|GTX') { $tips += 'Panel de control de NVIDIA &gt; Configuraci&oacute;n 3D: Modo de baja latencia en &quot;Activado&quot; (o &quot;Ultra&quot; en juegos sin Reflex), Administraci&oacute;n de energ&iacute;a en &quot;M&aacute;ximo rendimiento preferido&quot; y Sincronizaci&oacute;n vertical apagada.' }
+        $tips += 'Mouse: 1000 Hz de polling rate alcanza. 4000 u 8000 Hz casi no se notan y en PCs justas pueden bajar FPS.'
         $tips += 'Siempre: la pantalla a su m&aacute;xima frecuencia en Configuraci&oacute;n &gt; Pantalla &gt; Pantalla avanzada, y drivers de la placa de video al d&iacute;a.'
         foreach ($t in $tips) { [void]$VX.ListaJuegos.Children.Add((New-RecItem $t '#FFC83D')) }
     }

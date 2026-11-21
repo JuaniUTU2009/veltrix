@@ -111,15 +111,26 @@ function leerApp_() {
 }
 
 // ------------------------------------------------------------------ Hotmart
+function consultaVentas_(tx, extra) {
+  var url = 'https://developers.hotmart.com/payments/api/v1/sales/history?transaction=' + encodeURIComponent(tx) + (extra || '');
+  var r = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tokenHotmart_() }, muteHttpExceptions: true });
+  if (r.getResponseCode() === 401) { CacheService.getScriptCache().remove('hm_token'); }
+  return r;
+}
+
 function verificarHotmart_(tx, email) {
-  var tokenH = tokenHotmart_();
-  var url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
-    + '?transaction=' + encodeURIComponent(tx)
-    + '&start_date=1577836800000'
-    + '&end_date=' + (Date.now() + 86400000);
-  var r = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tokenH }, muteHttpExceptions: true });
-  if (r.getResponseCode() !== 200) return { ok: false, msg: 'No pudimos consultar Hotmart ahora. Proba de nuevo en unos minutos.' };
-  var items = (JSON.parse(r.getContentText()).items) || [];
+  var r1 = consultaVentas_(tx, '');
+  var items = [];
+  if (r1.getResponseCode() === 200) items = (JSON.parse(r1.getContentText()).items) || [];
+  var r2 = null;
+  if (!items.length) {
+    r2 = consultaVentas_(tx, '&start_date=1577836800000&end_date=' + Date.now());
+    if (r2.getResponseCode() === 200) items = (JSON.parse(r2.getContentText()).items) || [];
+  }
+  if (!items.length && r1.getResponseCode() !== 200 && (!r2 || r2.getResponseCode() !== 200)) {
+    console.log('Hotmart: ' + r1.getResponseCode() + ' ' + r1.getContentText().slice(0, 300) + ' | ' + (r2 ? r2.getResponseCode() + ' ' + r2.getContentText().slice(0, 300) : ''));
+    return { ok: false, msg: 'No pudimos consultar Hotmart ahora (codigo ' + r1.getResponseCode() + '/' + (r2 ? r2.getResponseCode() : '-') + '). Proba de nuevo en unos minutos.' };
+  }
   if (!items.length) return { ok: false, definitivo: true, msg: 'No encontramos una compra con ese codigo. Revisa el mail de Hotmart (empieza con HP).' };
 
   var it = items[0];

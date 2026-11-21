@@ -355,7 +355,7 @@ Unregister-ScheduledTask -TaskName 'Veltrix Despues' -Confirm:$false
 
 $VX_CORE = @'
 $URL = 'https://raw.githubusercontent.com/JuaniUTU2009/veltrix/main/veltrix.ps1'
-$VER = '5.0'
+$VER = '5.0.1'
 $PLAN_VELTRIX = '7e1f5a00-0000-4000-8000-00000000f9a5'
 $CDM = 'HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
 $CDM_VALS = 'SilentInstalledAppsEnabled', 'SystemPaneSuggestionsEnabled', 'SoftLandingEnabled', 'PreInstalledAppsEnabled', 'OemPreInstalledAppsEnabled', 'RotatingLockScreenOverlayEnabled', 'SubscribedContent-310093Enabled', 'SubscribedContent-338387Enabled', 'SubscribedContent-338388Enabled', 'SubscribedContent-338389Enabled', 'SubscribedContent-338393Enabled', 'SubscribedContent-353694Enabled', 'SubscribedContent-353696Enabled', 'SubscribedContent-353698Enabled'
@@ -809,7 +809,7 @@ function Paso {
     } else { VxLog $t 'step' }
 }
 function Listo { param($t) VxLog $t 'ok' }
-function Aviso { param($t) VxLog $t 'warn' }
+function Aviso { param($t) $global:VxUltimoAviso = $t; VxLog $t 'warn' }
 function Info  { param($t) VxLog $t 'info' }
 function Get-RegVal {
     param($Path, $Name)
@@ -1403,17 +1403,38 @@ $VX_XAML = @'
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
             <Grid Width="48" Height="26" Background="Transparent">
-              <Border x:Name="t" CornerRadius="13" Background="#1E3A5F"/>
-              <Ellipse x:Name="k" Width="20" Height="20" Fill="#C9D6E3" HorizontalAlignment="Left" Margin="3,0,0,0"/>
+              <Border x:Name="t" CornerRadius="13" BorderThickness="1" BorderBrush="#2E5A8A">
+                <Border.Background><SolidColorBrush x:Name="tb" Color="#1E3A5F"/></Border.Background>
+              </Border>
+              <Ellipse x:Name="k" Width="20" Height="20" HorizontalAlignment="Left" Margin="3,0,0,0">
+                <Ellipse.Fill><SolidColorBrush x:Name="kb" Color="#C9D6E3"/></Ellipse.Fill>
+                <Ellipse.RenderTransform><TranslateTransform x:Name="kt" X="0"/></Ellipse.RenderTransform>
+              </Ellipse>
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="t" Property="Background" Value="#2EE6FF"/>
-                <Setter TargetName="k" Property="HorizontalAlignment" Value="Right"/>
-                <Setter TargetName="k" Property="Margin" Value="0,0,3,0"/>
-                <Setter TargetName="k" Property="Fill" Value="#04172F"/>
+                <Setter TargetName="t" Property="BorderBrush" Value="#2EE6FF"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="kt" Storyboard.TargetProperty="X" To="22" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                      <ColorAnimation Storyboard.TargetName="tb" Storyboard.TargetProperty="Color" To="#2EE6FF" Duration="0:0:0.18"/>
+                      <ColorAnimation Storyboard.TargetName="kb" Storyboard.TargetProperty="Color" To="#04172F" Duration="0:0:0.18"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="kt" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                      <ColorAnimation Storyboard.TargetName="tb" Storyboard.TargetProperty="Color" To="#1E3A5F" Duration="0:0:0.18"/>
+                      <ColorAnimation Storyboard.TargetName="kb" Storyboard.TargetProperty="Color" To="#C9D6E3" Duration="0:0:0.18"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
               </Trigger>
-              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="t" Property="Opacity" Value="0.9"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
@@ -2177,22 +2198,53 @@ else {
                 $tw2 = $VX_TWEAKS | Where-Object { $_.Id -eq $id } | Select-Object -First 1
                 if ($global:VxPreview) { Test-NoPreview | Out-Null; Update-Tweaks; return }
                 $on = [bool]$this.IsChecked
-                try {
-                    if ($on) { & $tw2.On; Add-LogLine 'ok' ((T $tw2.Nombre) + ': activado') }
-                    else { & $tw2.Off; Add-LogLine 'ok' ((T $tw2.Nombre) + ': desactivado (como viene Windows)') }
-                } catch { Add-LogLine 'warn' ("Error: " + $_.Exception.Message) }
-                Update-Tweaks
+                Invoke-Tweak $tw2 $on $this
             })
         }
         [void]$VX.ListaTweaks.Children.Add($wp)
     }
+    $global:VxTweakPedido = @{}
+    function Get-TweakEstado {
+        param($tw)
+        $st = $false
+        try { $st = [bool](& $tw.State) } catch {}
+        if ($global:VxTweakPedido.ContainsKey($tw.Id)) {
+            $p = $global:VxTweakPedido[$tw.Id]
+            if ($p -eq $st) { $global:VxTweakPedido.Remove($tw.Id) } else { $st = $p }
+        }
+        return $st
+    }
+    function Invoke-Tweak {
+        param($tw, [bool]$on, $sw)
+        $global:VxTweakBusy = $true
+        $sw.IsEnabled = $false
+        $win.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+        $global:VxUltimoAviso = $null
+        $err = $null
+        try { if ($on) { & $tw.On } else { & $tw.Off } } catch { $err = $_.Exception.Message }
+        $st = $false
+        try { $st = [bool](& $tw.State) } catch {}
+        $nom = T $tw.Nombre
+        if ($err) {
+            Add-LogLine 'warn' ("$nom" + ': no se pudo cambiar (' + $err + ')')
+            $sw.IsChecked = -not $on
+        } elseif ($st -eq $on) {
+            $global:VxTweakPedido.Remove($tw.Id)
+            Add-LogLine 'ok' ($nom + $(if ($on) { ': activado' } else { ': desactivado (como viene Windows)' }))
+            $sw.IsChecked = $on
+        } elseif ($on -and $global:VxUltimoAviso) {
+            $sw.IsChecked = $false
+        } else {
+            $global:VxTweakPedido[$tw.Id] = $on
+            Add-LogLine 'ok' ($nom + $(if ($on) { ': activado' } else { ': desactivado' }) + (T ' (se termina de aplicar al reiniciar)'))
+            $sw.IsChecked = $on
+        }
+        $sw.IsEnabled = $true
+        $global:VxTweakBusy = $false
+    }
     function Update-Tweaks {
         $global:VxTweakBusy = $true
-        foreach ($tw in $VX_TWEAKS) {
-            $st = $false
-            try { $st = [bool](& $tw.State) } catch {}
-            $global:VxTweakChk[$tw.Id].IsChecked = $st
-        }
+        foreach ($tw in $VX_TWEAKS) { $global:VxTweakChk[$tw.Id].IsChecked = (Get-TweakEstado $tw) }
         $global:VxTweakBusy = $false
     }
     $VX.BtnTweaksRec.Add_Click({
@@ -2201,10 +2253,8 @@ else {
         $lap = ($global:VxMetricas -and $global:VxMetricas.Laptop)
         foreach ($tw in $VX_TWEAKS) {
             if ($lap -and $tw.Solo -eq 'PC') { continue }
-            $st = $false; try { $st = [bool](& $tw.State) } catch {}
-            if (-not $st) { try { & $tw.On; Add-LogLine 'ok' ((T $tw.Nombre) + ': activado') } catch {} }
+            if (-not (Get-TweakEstado $tw)) { Invoke-Tweak $tw $true $global:VxTweakChk[$tw.Id] }
         }
-        Update-Tweaks
         Show-Msg 'Listo. Algunos cambios necesitan reiniciar la PC para notarse.' | Out-Null
     })
 
@@ -2345,9 +2395,16 @@ else {
             $sw.Add_Click({
                 $e2 = $this.Tag
                 if ($global:VxPreview) { Test-NoPreview | Out-Null; $this.IsChecked = $e2.Activo; return }
-                Set-InicioEstado -Ap $e2.Ap -Nombre $e2.Nombre -Activo ([bool]$this.IsChecked)
-                $e2.Activo = [bool]$this.IsChecked
-                Add-LogLine 'ok' ("{0}: {1} al inicio" -f $e2.Nombre, $(if ($e2.Activo) { 'activado' } else { 'desactivado' }))
+                $quiere = [bool]$this.IsChecked
+                try {
+                    Set-InicioEstado -Ap $e2.Ap -Nombre $e2.Nombre -Activo $quiere
+                    $e2.Activo = $quiere
+                    $this.IsChecked = $quiere
+                    Add-LogLine 'ok' ("{0}: {1} al iniciar Windows" -f $e2.Nombre, $(if ($quiere) { 'se abre' } else { 'ya no se abre' }))
+                } catch {
+                    $this.IsChecked = $e2.Activo
+                    Add-LogLine 'warn' ("{0}: no se pudo cambiar" -f $e2.Nombre)
+                }
             })
             [void]$VX.ListaInicio.Children.Add($row)
         }
